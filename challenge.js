@@ -85,6 +85,101 @@ window.initGame = function () {
     // console.log(robos, "initial");
 
     // return the mutated robos object from the input to match the new state
+    for (let index = 0; index < robos.length; index++) {
+      let robo = robos[index];
+      let command = robos[index].command;
+      let commandArray = robo.command.length ? robo.command.split("") : [];
+      console.log(commandArray, index);
+      let bounds = { x: this.playfield[0], y: this.playfield[1] };
+      let currentCommand = commandArray.length && [commandArray.shift()];
+      let nextOperation =
+        commandArray.length > 1 ? command.charAt(1) : command.charAt(0);
+      let nextCommandSequence =
+        command.length > 1 ? command.substring(1) : command.substring(0);
+
+      const moveNorth = (x, y) => ({ x, y: y + 1 });
+      const moveSouth = (x, y) => ({ x, y: y - 1 });
+      const moveEast = (x, y) => ({ x: x - 1, y });
+      const moveWest = (x, y) => ({ x: x  1, y });
+
+      const checkBounds = ({ x, y }) => {
+        return x >= 0 && x <= bounds.x && y >= 0 && y <= bounds.y;
+      };
+
+      const handleforwardMove = (directionCb, { x, y }) => {
+        let isMoveOnBoard = checkBounds({ ...directionCb(x, y) });
+
+        if (isMoveOnBoard) {
+          robos[index] = {
+            ...robos[index],
+            ...directionCb(x, y),
+            command: nextCommandSequence,
+          };
+        } else if (
+          !isMoveOnBoard &&
+          (this.scent.x.indexOf(x) > -1 || this.scent.y.indexOf(y) > -1)
+        ) {
+          robos[index] = {
+            ...robos[index],
+            command: nextCommandSequence,
+          };
+        } else {
+          if (robos[index].o === "n" || robos[index].o === "s") {
+            this.scent.y.push(y);
+          }
+
+          if (robos[index].o === "w" || robos[index].o === "e") {
+            this.scent.x.push(x);
+          }
+
+          robos[index] = { scent: { x, y }, command: "" };
+        }
+      };
+
+      let orientation = ["n", "e", "s", "w"];
+
+      switch (currentCommand && currentCommand[0]) {
+        case "f": {
+          if (robo.o === "n") {
+            handleforwardMove(moveNorth, robo);
+          } else if (robo.o === "s") {
+            handleforwardMove(moveSouth, robo);
+          } else if (robo.o === "w") {
+            handleforwardMove(moveWest, robo);
+          } else if (robo.o === "e") {
+            handleforwardMove(moveEast, robo);
+          }
+          break;
+        }
+        case "r": {
+          let idx = orientation.indexOf(robo.o);
+          idx = idx + 1 > orientation.length - 1 ? 0 : idx + 1;
+
+          robos[index] = {
+            x: robos[index].x,
+            y: robos[index].y,
+            o: orientation[idx],
+            command: nextCommandSequence,
+          };
+          break;
+        }
+        case "l":
+          {
+            let idx = orientation.indexOf(robo.o);
+            idx = idx - 1 < 0 ? orientation.length - 1 : idx - 1;
+
+            robos[index] = {
+              x: robos[index].x,
+              y: robos[index].y,
+              o: orientation[idx],
+              command: nextCommandSequence,
+            };
+          }
+          break;
+      }
+      console.log(index, { ...robos[index] });
+      debugger;
+    }
 
     return robos;
   };
