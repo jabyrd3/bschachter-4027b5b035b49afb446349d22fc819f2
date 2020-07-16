@@ -218,21 +218,17 @@ window.initGame = function () {
       return robo.scent;
     });
 
-    document.getElementById("robots").innerHTML = `<ul>${surviving.map(
-      (robo) => {
-        return `<li>Position: ${robo.x}, ${
-          robo.y
-        } | Orientation: ${robo.o.toUpperCase()}</li>`;
-      }
-    )}</ul>`;
+    document.getElementById("robots").innerHTML = `${surviving.map((robo) => {
+      return `<li>Position: ${robo.x}, ${
+        robo.y
+      } | Orientation: ${robo.o.toUpperCase()}</li>`;
+    })}`;
 
-    document.getElementById("lostRobots").innerHTML = `<ul>${lost.map(
-      (robo) => {
-        return `<li> I died going ${robo.scent.o.toUpperCase()} from coordinates: ${
-          robo.scent.x
-        }, ${robo.scent.y}</li>`;
-      }
-    )}</ul>`;
+    document.getElementById("lostRobots").innerHTML = `${lost.map((robo) => {
+      return `<li> I died going ${robo.scent.o.toUpperCase()} from coordinates: ${
+        robo.scent.x
+      }, ${robo.scent.y}</li>`;
+    })}`;
     return robos;
   };
 
