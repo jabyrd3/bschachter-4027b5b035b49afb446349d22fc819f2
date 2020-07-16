@@ -6,8 +6,6 @@ window.initGame = function () {
   const command =
     "5 3 \n 1 1 s\n ffffff\n 2 1 w \n flfffffrrfffffff\n 0 3 w\n LLFFFLFLFL";
 
-  const command2 = "5 3 \n 1 1 s\n ffffff\n 2 1 w \n flfffffrrfffffff\n";
-
   // this function parses the input string so that we have useful names/parameters
   // to define the playfield and robots for subsequent steps
   this.playfield;
@@ -25,8 +23,6 @@ window.initGame = function () {
     // replace this with a correct object
     // first two numbers are initial coords.
     //
-
-    const instructionBoundLength = 50;
     let robos = [];
     let temp;
 
@@ -50,7 +46,6 @@ window.initGame = function () {
     }
     this.playfield = inputArray[0];
 
-    console.log(robos, "final robos");
     return {
       bounds: inputArray[0],
       robos,
@@ -60,8 +55,7 @@ window.initGame = function () {
   // this function replaces the robos after they complete one instruction
   // from their commandset
   const tickRobos = (robos) => {
-    // debugger;
-    console.log("tickrobos", robos);
+    console.log("tickrobos");
 
     const playingField = { x: this.playfield[0], y: this.playfield[1] };
 
@@ -76,7 +70,6 @@ window.initGame = function () {
     };
 
     if (!isCommandRemaining(robos)) {
-      // debugger;
       return robos;
     }
 
@@ -94,10 +87,6 @@ window.initGame = function () {
     //
 
     const move = (robo) => {
-      // TODO
-      // This function mixes a couple of different concerns.
-      // refactor
-
       let prevCords = { x: robo.x, y: robo.y };
       let cords = { x: robo.x, y: robo.y };
 
@@ -111,35 +100,29 @@ window.initGame = function () {
         cords.x -= 1;
       }
 
+      // Leave a scent and push off the board.
+      // remove all remaining commands
       if (!isPositionInBounds(cords) && !isScentLeft(prevCords)) {
-        // console.log(
-        //   isPositionInBounds(cords),
-        //   isScentLeft(prevCords),
-        //   cords,
-        //   prevCords
-        // );
-        // debugger;
-        //   //it should be removed from the robos array.
         this.scents.push(prevCords);
-        robo = { scent: true, command: "" };
-        // return;
+        robo = { scent: { ...prevCords, o: robo.o }, command: "" };
       }
 
+      // If we're going to go off bounds but a scent is left
+      // ignore the command and go to the next.
       if (isScentLeft(prevCords) && !isPositionInBounds(cords)) {
-        console.log(robo, "from is scent left");
-
         return {
           ...robo,
           command: robo.command.substring(1),
         };
       }
 
+      // Update cords and command
       robo = {
         ...robo,
         ...cords,
         command: robo.command.substring(1),
       };
-      // debugger;
+
       return robo;
     };
 
@@ -174,19 +157,15 @@ window.initGame = function () {
       // The scent is left at the last grid position the robot occupied before disappearing over the edge.
       // An instruction to move “off” the world from a grid point from which a robot has been previously lost is simply ignored by the current robot.
 
-      // console.log(x, y);
-      // debugger;
       return this.scents.some((scent) => {
         return scent.x === x && scent.y === y;
       });
     };
 
-    // console.log(robos, "from 175");
-
     for (let i = 0; i < robos.length; i++) {
       const command = robos[i].command.substring(0, 1);
 
-      if (robos[i] === "scent" || !command.length) {
+      if (!command.length) {
         continue;
       }
 
@@ -195,8 +174,6 @@ window.initGame = function () {
       } else {
         robos[i] = updateOrientation(robos[i]);
       }
-
-      console.log(robos[i], command);
     }
 
     return robos;
@@ -232,7 +209,30 @@ window.initGame = function () {
     //
     // summarize the mission and inject the results into the DOM elements referenced in readme.md
     //
-    console.log({ robos });
+
+    const surviving = robos.filter((robo) => {
+      return !robo.scent;
+    });
+
+    const lost = robos.filter((robo) => {
+      return robo.scent;
+    });
+
+    document.getElementById("robots").innerHTML = `<ul>${surviving.map(
+      (robo) => {
+        return `<li>Position: ${robo.x}, ${
+          robo.y
+        } | Orientation: ${robo.o.toUpperCase()}</li>`;
+      }
+    )}</ul>`;
+
+    document.getElementById("lostRobots").innerHTML = `<ul>${lost.map(
+      (robo) => {
+        return `<li> I died going ${robo.scent.o.toUpperCase()} from coordinates: ${
+          robo.scent.x
+        }, ${robo.scent.y}</li>`;
+      }
+    )}</ul>`;
     return robos;
   };
 
