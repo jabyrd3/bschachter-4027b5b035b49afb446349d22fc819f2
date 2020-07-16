@@ -60,128 +60,159 @@ window.initGame = function () {
   // this function replaces the robos after they complete one instruction
   // from their commandset
   const tickRobos = (robos) => {
-    console.log("tickrobos");
-    //
-    // task #2
-    //
-    // in this function, write business logic to move robots around the playfield
-    // the 'robos' input is an array of objects; each object has 4 parameters.
-    // This function needs to edit each robot in the array so that its x/y coordinates
-    // and orientation parameters match the robot state after 1 command has been completed.
-    // Also, you need to remove the command the robot just completed from the command list.
-    // example input:
-    //
-    // robos[0] = {x: 2, y: 2, o: 'N', command: 'frlrlrl'}
-    //
-    //                   - becomes -
-    //
-    // robos[0] = {x: 2, y: 1, o: 'N', command: 'rlrlrl'}
-    //
-    // if a robot leaves the bounds of the playfield, it should be removed from the robos
-    // array. It should leave a 'scent' in it's place. If another robot–for the duration
-    // of its commandset–encounters this 'scent', it should refuse any commands that would
-    // cause it to leave the playfield.
+    debugger;
+    console.log("tickrobos", robos);
 
-    // console.log(robos, "initial");
+    const playingField = { x: this.playfield[0], y: this.playfield[1] };
 
-    // return the mutated robos object from the input to match the new state
-    for (let index = 0; index < robos.length; index++) {
-      let robo = robos[index];
-      let command = robos[index].command;
-      let commandArray = robo.command.length ? robo.command.split("") : [];
-      console.log(commandArray, index);
-      let bounds = { x: this.playfield[0], y: this.playfield[1] };
-      let currentCommand = commandArray.length && [commandArray.shift()];
-      let nextOperation =
-        commandArray.length > 1 ? command.charAt(1) : command.charAt(0);
-      let nextCommandSequence =
-        command.length > 1 ? command.substring(1) : command.substring(0);
+    this.scents = [];
 
-      const moveNorth = (x, y) => ({ x, y: y + 1 });
-      const moveSouth = (x, y) => ({ x, y: y - 1 });
-      const moveEast = (x, y) => ({ x: x - 1, y });
-      const moveWest = (x, y) => ({ x: x  1, y });
-
-      const checkBounds = ({ x, y }) => {
-        return x >= 0 && x <= bounds.x && y >= 0 && y <= bounds.y;
-      };
-
-      const handleforwardMove = (directionCb, { x, y }) => {
-        let isMoveOnBoard = checkBounds({ ...directionCb(x, y) });
-
-        if (isMoveOnBoard) {
-          robos[index] = {
-            ...robos[index],
-            ...directionCb(x, y),
-            command: nextCommandSequence,
-          };
-        } else if (
-          !isMoveOnBoard &&
-          (this.scent.x.indexOf(x) > -1 || this.scent.y.indexOf(y) > -1)
-        ) {
-          robos[index] = {
-            ...robos[index],
-            command: nextCommandSequence,
-          };
-        } else {
-          if (robos[index].o === "n" || robos[index].o === "s") {
-            this.scent.y.push(y);
-          }
-
-          if (robos[index].o === "w" || robos[index].o === "e") {
-            this.scent.x.push(x);
-          }
-
-          robos[index] = { scent: { x, y }, command: "" };
+    const isCommandRemaining = (robos) => {
+      return robos.reduce((prev, curr) => {
+        if (curr.command) {
+          prev = curr.command.length > prev ? curr.command.length : prev;
         }
-      };
 
-      let orientation = ["n", "e", "s", "w"];
+        return prev;
+      }, 0);
+    };
 
-      switch (currentCommand && currentCommand[0]) {
-        case "f": {
-          if (robo.o === "n") {
-            handleforwardMove(moveNorth, robo);
-          } else if (robo.o === "s") {
-            handleforwardMove(moveSouth, robo);
-          } else if (robo.o === "w") {
-            handleforwardMove(moveWest, robo);
-          } else if (robo.o === "e") {
-            handleforwardMove(moveEast, robo);
-          }
-          break;
-        }
-        case "r": {
-          let idx = orientation.indexOf(robo.o);
-          idx = idx + 1 > orientation.length - 1 ? 0 : idx + 1;
+    if (!isCommandRemaining(robos)) {
+      // debugger;
+      return robos;
+    }
 
-          robos[index] = {
-            x: robos[index].x,
-            y: robos[index].y,
-            o: orientation[idx],
-            command: nextCommandSequence,
-          };
-          break;
-        }
-        case "l":
-          {
-            let idx = orientation.indexOf(robo.o);
-            idx = idx - 1 < 0 ? orientation.length - 1 : idx - 1;
+    // scent is left behind when robot dies
 
-            robos[index] = {
-              x: robos[index].x,
-              y: robos[index].y,
-              o: orientation[idx],
-              command: nextCommandSequence,
-            };
-          }
-          break;
+    // Left and Right change orientation.
+    // Forward moves robot coords.
+
+    // DONE North y + 1
+    // DONE South y - 1
+    // DONE West x - 1
+    // DONE East x + 1
+
+    // Left most char in the command stack. exec.
+    //
+
+    const move = (robo) => {
+      // TODO
+      // This function mixes a couple of different concerns.
+      // refactor
+      let prevCords = { x: robo.x, y: robo.y };
+      let cords = { x: robo.x, y: robo.y };
+
+      if (robo.o === "n") {
+        cords.y += 1;
+      } else if (robo.o === "s") {
+        cords.y -= 1;
+      } else if (robo.o === "e") {
+        cords.x += 1;
+      } else if (robo.o === "w") {
+        cords.x -= 1;
+      } else {
+        return robo;
       }
-      console.log(index, { ...robos[index] });
-      debugger;
+
+      if (!isPositionInBounds(cords) && !isScentLeft(prevCords)) {
+        //it should be removed from the robos array.
+        this.scents.push(prevCords);
+        robo = "scent";
+        return robo;
+      }
+
+      robo = {
+        ...robo,
+        ...cords,
+        command: robo.command.substring(1),
+      };
+
+      return robo;
+    };
+
+    const updateOrientation = (robo) => {
+      const changeOrientation = () => {
+        const orientation = ["n", "e", "s", "w"];
+        let idx = orientation.indexOf(robo.o);
+        if (command === "r") {
+          idx = idx + 1 > orientation.length - 1 ? 0 : idx + 1;
+        } else {
+          idx = idx - 1 < 0 ? orientation.length - 1 : idx - 1;
+        }
+
+        return orientation[idx];
+      };
+
+      robo = {
+        ...robo,
+        o: changeOrientation(),
+        command: robo.command.substring(1),
+      };
+      return robo;
+    };
+
+    const isPositionInBounds = ({ x, y }) => {
+      return x >= 0 && x <= playingField.x && y >= 0 && y <= playingField.y;
+    };
+
+    const isScentLeft = ({ x, y }) => {
+      //TODO
+      // robots leave a robot “scent” that prohibits future robots from dropping off the world at the same grid point.
+      // The scent is left at the last grid position the robot occupied before disappearing over the edge.
+      // An instruction to move “off” the world from a grid point from which a robot has been previously lost is simply ignored by the current robot.
+
+      return this.scents.some((scent) => {
+        return scent.x === x && scent.y === y;
+      });
+    };
+
+    console.log(robos, "from 175");
+
+    for (let i = 0; i < robos.length; i++) {
+      if (robos[i] === "scent") {
+        console.log("hiiiiiiiiit");
+        continue;
+      }
+      const command = robos[i].command.substring(0, 1);
+
+      if (!command.length) {
+        robos[i] = robos[i];
+        continue;
+      }
+
+      if (command === "f") {
+        robos[i] = move(robos[i]);
+      } else {
+        robos[i] = updateOrientation(robos[i]);
+      }
+
+      console.log(robos[i]);
     }
 
     return robos;
+
+    // //
+    // // task #2
+    // //
+    // // in this function, write business logic to move robots around the playfield
+    // // the 'robos' input is an array of objects; each object has 4 parameters.
+    // // This function needs to edit each robot in the array so that its x/y coordinates
+    // // and orientation parameters match the robot state after 1 command has been completed.
+    // // Also, you need to remove the command the robot just completed from the command list.
+    // // example input:
+    // //
+    // // robos[0] = {x: 2, y: 2, o: 'N', command: 'frlrlrl'}
+    // //
+    // //                   - becomes -
+    // //
+    // // robos[0] = {x: 2, y: 1, o: 'N', command: 'rlrlrl'}
+    // //
+    // // if a robot leaves the bounds of the playfield, it should be removed from the robos
+    // // array. It should leave a 'scent' in it's place. If another robot–for the duration
+    // // of its commandset–encounters this 'scent', it should refuse any commands that would
+    // // cause it to leave the playfield.
+    // // console.log(robos, "initial");
+    // // return the mutated robos object from the input to match the new state
   };
 
   // mission summary function
