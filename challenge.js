@@ -169,10 +169,6 @@ window.initGame = function () {
     console.log(robos, "from 175");
 
     for (let i = 0; i < robos.length; i++) {
-      if (robos[i] === "scent") {
-        console.log("hiiiiiiiiit");
-        continue;
-      }
       const command = robos[i].command.substring(0, 1);
 
       if (!command.length) {
@@ -182,6 +178,9 @@ window.initGame = function () {
 
       if (command === "f") {
         robos[i] = move(robos[i]);
+        if (robos[i] === "scent") {
+          delete robos[i];
+        }
       } else {
         robos[i] = updateOrientation(robos[i]);
       }
