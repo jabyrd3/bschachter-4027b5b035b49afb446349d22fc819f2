@@ -11,7 +11,7 @@ window.initGame = function () {
   // this function parses the input string so that we have useful names/parameters
   // to define the playfield and robots for subsequent steps
   this.playfield;
-  this.scent = { x: [], y: [] };
+  this.scents = [];
   const parseInput = (input) => {
     //
     // task #1
@@ -60,12 +60,10 @@ window.initGame = function () {
   // this function replaces the robos after they complete one instruction
   // from their commandset
   const tickRobos = (robos) => {
-    debugger;
+    // debugger;
     console.log("tickrobos", robos);
 
     const playingField = { x: this.playfield[0], y: this.playfield[1] };
-
-    this.scents = [];
 
     const isCommandRemaining = (robos) => {
       return robos.reduce((prev, curr) => {
@@ -99,26 +97,41 @@ window.initGame = function () {
       // TODO
       // This function mixes a couple of different concerns.
       // refactor
+
       let prevCords = { x: robo.x, y: robo.y };
       let cords = { x: robo.x, y: robo.y };
 
       if (robo.o === "n") {
-        cords.y += 1;
-      } else if (robo.o === "s") {
         cords.y -= 1;
+      } else if (robo.o === "s") {
+        cords.y += 1;
       } else if (robo.o === "e") {
         cords.x += 1;
       } else if (robo.o === "w") {
         cords.x -= 1;
-      } else {
-        return robo;
       }
 
       if (!isPositionInBounds(cords) && !isScentLeft(prevCords)) {
-        //it should be removed from the robos array.
+        // console.log(
+        //   isPositionInBounds(cords),
+        //   isScentLeft(prevCords),
+        //   cords,
+        //   prevCords
+        // );
+        // debugger;
+        //   //it should be removed from the robos array.
         this.scents.push(prevCords);
-        robo = "scent";
-        return robo;
+        robo = { scent: true, command: "" };
+        // return;
+      }
+
+      if (isScentLeft(prevCords) && !isPositionInBounds(cords)) {
+        console.log(robo, "from is scent left");
+
+        return {
+          ...robo,
+          command: robo.command.substring(1),
+        };
       }
 
       robo = {
@@ -126,7 +139,7 @@ window.initGame = function () {
         ...cords,
         command: robo.command.substring(1),
       };
-
+      // debugger;
       return robo;
     };
 
@@ -161,31 +174,29 @@ window.initGame = function () {
       // The scent is left at the last grid position the robot occupied before disappearing over the edge.
       // An instruction to move “off” the world from a grid point from which a robot has been previously lost is simply ignored by the current robot.
 
+      // console.log(x, y);
+      // debugger;
       return this.scents.some((scent) => {
         return scent.x === x && scent.y === y;
       });
     };
 
-    console.log(robos, "from 175");
+    // console.log(robos, "from 175");
 
     for (let i = 0; i < robos.length; i++) {
       const command = robos[i].command.substring(0, 1);
 
-      if (!command.length) {
-        robos[i] = robos[i];
+      if (robos[i] === "scent" || !command.length) {
         continue;
       }
 
       if (command === "f") {
         robos[i] = move(robos[i]);
-        if (robos[i] === "scent") {
-          delete robos[i];
-        }
       } else {
         robos[i] = updateOrientation(robos[i]);
       }
 
-      console.log(robos[i]);
+      console.log(robos[i], command);
     }
 
     return robos;
